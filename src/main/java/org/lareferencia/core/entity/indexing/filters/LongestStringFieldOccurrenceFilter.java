@@ -40,12 +40,14 @@ public class LongestStringFieldOccurrenceFilter implements IFieldOccurrenceFilte
     private int getLength(FieldOccurrence a, Map<String,String> params) {
 
         String subfield = params.containsKey("subfield") ? params.get("subfield") : null;
+        // regex example ,\s|\.|Doctor
+        String regexClean = params.containsKey("filter-regex-clean") ? params.get("filter-regex-clean") : "";
 
         try {
             if (subfield != null)
-                return a.getValue(subfield).length();
+                return a.getValue(subfield).replaceAll(regexClean, "") .length();
             else
-                return a.getValue().length();
+                return a.getValue().replaceAll(regexClean, "").length();
 
         } catch (EntityRelationException e) {
             logger.error("Error filtering occurrences " + this.getName() + " ", e);
