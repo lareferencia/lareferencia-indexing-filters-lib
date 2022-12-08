@@ -46,16 +46,19 @@ public class OldestDateFieldOccurrenceFilter implements IFieldOccurrenceFilter {
         for (FieldOccurrence fo : filteredOccurrences) {
 
             LocalDateTime ldt = getLocalDateTime(fo, params);
-            // create a new FieldOccurrence in replace of the existing one, the new one is built by selected subfields formatted as filterFormat
-            FieldOccurrence newOccur = new SimpleFieldOccurrence(fo.getFieldType());
 
-            try {
-                newOccur.addValue( DateHelper.getDateTimeFormattedString(ldt, filter_date_format) );
-                result.add(newOccur);
-            } catch (EntityRelationException e) {
-                logger.error("Error filtering date occurrences " + this.getName() + " ", e);
+            if (ldt != null) {
+
+                // create a new FieldOccurrence in replace of the existing one, the new one is built by selected subfields formatted as filterFormat
+                FieldOccurrence newOccur = new SimpleFieldOccurrence(fo.getFieldType());
+
+                try {
+                    newOccur.addValue(DateHelper.getDateTimeFormattedString(ldt, filter_date_format));
+                    result.add(newOccur);
+                } catch (EntityRelationException e) {
+                    logger.error("Error filtering date occurrences " + this.getName() + " ", e);
+                }
             }
-
         }
 
         return result;
@@ -63,6 +66,16 @@ public class OldestDateFieldOccurrenceFilter implements IFieldOccurrenceFilter {
 
     // TODO: move this to a helper class
     Comparator<LocalDateTime> compareLocalDateTimes = (LocalDateTime o1, LocalDateTime o2) -> {
+
+        // null cases
+        if (o1 == null && o2 == null) {
+            return 0;
+        } else if (o1 == null) {
+            return 1;
+        } else if (o2 == null) {
+            return -1;
+        }
+
         if (o1.isBefore(o2)) {
             return -1;
         } else if (o1.isAfter(o2)) {
@@ -74,11 +87,15 @@ public class OldestDateFieldOccurrenceFilter implements IFieldOccurrenceFilter {
 
     private LocalDateTime getLocalDateTime(FieldOccurrence a, Map<String,String> params) {
 
+        String value = "NULL";
+
         try {
-            return dateHelper.parseDate( a.getValue() );
-        } catch (EntityRelationException e) {
-            logger.error("Error filtering occurrences " + this.getName() + " ", e);
+            value = a.getValue();
+            return dateHelper.parseDate(value);
+        } catch (Exception e) {
+            logger.error("Error parsing date " + value + " in filtering occurrences  " + this.getName(), e);
+            return null;
         }
-        return LocalDateTime.now();
+
     }
 }
