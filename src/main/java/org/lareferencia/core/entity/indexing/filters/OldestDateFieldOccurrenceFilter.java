@@ -93,7 +93,7 @@ public class OldestDateFieldOccurrenceFilter implements IFieldOccurrenceFilter {
             value = a.getValue();
             return dateHelper.parseDate(value);
         } catch (Exception e) {
-            logger.error("Error parsing date " + value + " in filtering occurrences  " + this.getName(), e);
+            logger.debug("Error parsing date " + value + " in filtering occurrences  " + this.getName(), e);
             return null;
         }
 
