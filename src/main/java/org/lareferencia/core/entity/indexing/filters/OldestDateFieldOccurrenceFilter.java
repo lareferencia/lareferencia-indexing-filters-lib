@@ -31,9 +31,11 @@ public class OldestDateFieldOccurrenceFilter implements IFieldOccurrenceFilter {
 
         int filter_limit = params.containsKey("filter-limit") ? Integer.parseInt(params.get("filter-limit")) : 1;
         String filter_date_format = params.containsKey("filter-date-format") ? params.get("filter-date-format") : "yyyy-MM-dd";
+        
+        
 
         Collection<FieldOccurrence> filteredOccurrences = occurrences.stream()
-                .filter(occurrence -> getLocalDateTime(occurrence, params).equals(occurrences.stream()
+                .filter(occurrence -> getLocalDateTime(occurrence, params) != null && getLocalDateTime(occurrence, params).equals(occurrences.stream()
                         .map(occ -> getLocalDateTime(occ, params))
                         .min(compareLocalDateTimes).get()))
                 .collect(Collectors.toList());
