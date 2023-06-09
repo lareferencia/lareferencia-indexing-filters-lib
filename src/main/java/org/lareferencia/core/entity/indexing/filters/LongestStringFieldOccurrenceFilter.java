@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 public class LongestStringFieldOccurrenceFilter implements IFieldOccurrenceFilter {
@@ -24,16 +25,22 @@ public class LongestStringFieldOccurrenceFilter implements IFieldOccurrenceFilte
 
        int filter_limit = params.containsKey("filter-limit") ? Integer.parseInt(params.get("filter-limit")) : 1;
 
-        Collection<FieldOccurrence> filteredOccurrences = occurrences.stream()
-                .filter(occurrence -> getLength(occurrence, params) == occurrences.stream()
+       Stream<FieldOccurrence> stream = occurrences.stream();
+
+       // filter by preferred
+        boolean preferred = params.containsKey("preferred") ? Boolean.parseBoolean(params.get("prefer red")) : false;
+        stream = stream.filter(occurrence -> occurrence.getPreferred() == preferred);
+
+         // filter longest string
+        stream = stream.filter(occurrence -> getLength(occurrence, params) == occurrences.stream()
                         .mapToInt(occ -> getLength(occ, params))
-                        .max().getAsInt())
-                .collect(Collectors.toList());
+                        .max().getAsInt());
+
 
         // limit the number of occurrences to filter_limit
-        filteredOccurrences = filteredOccurrences.stream().limit(filter_limit).collect(Collectors.toList());
+        stream = stream.limit(filter_limit);
 
-        return filteredOccurrences;
+        return stream.collect(Collectors.toList());
     }
 
 

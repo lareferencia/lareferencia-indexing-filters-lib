@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 public class OldestDateFieldOccurrenceFilter implements IFieldOccurrenceFilter {
@@ -31,37 +32,36 @@ public class OldestDateFieldOccurrenceFilter implements IFieldOccurrenceFilter {
 
         int filter_limit = params.containsKey("filter-limit") ? Integer.parseInt(params.get("filter-limit")) : 1;
         String filter_date_format = params.containsKey("filter-date-format") ? params.get("filter-date-format") : "yyyy-MM-dd";
-        
-        
 
-        Collection<FieldOccurrence> filteredOccurrences = occurrences.stream()
-                .filter(occurrence -> getLocalDateTime(occurrence, params) != null && getLocalDateTime(occurrence, params).equals(occurrences.stream()
+        Stream<FieldOccurrence> stream = occurrences.stream();
+
+        // filter by preferred
+        boolean preferred = params.containsKey("preferred") ? Boolean.parseBoolean(params.get("prefer red")) : false;
+        stream = stream.filter(occurrence -> occurrence.getPreferred() == preferred);
+
+       stream = stream.filter(occurrence -> getLocalDateTime(occurrence, params) != null && getLocalDateTime(occurrence, params).equals(occurrences.stream()
                         .map(occ -> getLocalDateTime(occ, params))
-                        .min(compareLocalDateTimes).get()))
-                .collect(Collectors.toList());
-
+                        .min(compareLocalDateTimes).get()));
 
         // limit the number of occurrences to filter_limit
-        filteredOccurrences = filteredOccurrences.stream().limit(filter_limit).collect(Collectors.toList());
+        stream = stream.limit(filter_limit);
 
-
-        for (FieldOccurrence fo : filteredOccurrences) {
-
-            LocalDateTime ldt = getLocalDateTime(fo, params);
-
-            if (ldt != null) {
-
-                // create a new FieldOccurrence in replace of the existing one, the new one is built by selected subfields formatted as filterFormat
-                FieldOccurrence newOccur = new SimpleFieldOccurrence(fo.getFieldType());
-
-                try {
-                    newOccur.addValue(DateHelper.getDateTimeFormattedString(ldt, filter_date_format));
-                    result.add(newOccur);
-                } catch (EntityRelationException e) {
-                    logger.error("Error filtering date occurrences " + this.getName() + " ", e);
-                }
+        // map to new occurrences
+        stream.map(fo -> {
+        LocalDateTime ldt = getLocalDateTime(fo, params);
+        if (ldt != null) {
+            FieldOccurrence newOccur = new SimpleFieldOccurrence(fo.getFieldType());
+            try {
+                newOccur.addValue(DateHelper.getDateTimeFormattedString(ldt, filter_date_format));
+                return newOccur;
+            } catch (EntityRelationException e) {
+                logger.error("Error filtering date occurrences " + this.getName() + " ", e);
             }
         }
+        return null;
+        })
+        .filter(Objects::nonNull)
+        .forEach(result::add);
 
         return result;
     }
