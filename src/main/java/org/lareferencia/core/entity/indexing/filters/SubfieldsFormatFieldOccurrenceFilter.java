@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,10 +33,19 @@ public class SubfieldsFormatFieldOccurrenceFilter implements IFieldOccurrenceFil
             return occurrences;
         }
 
-        for ( FieldOccurrence occur: occurrences ) {
+        // get a stream from the occurrences
+        Stream<FieldOccurrence> stream = occurrences.stream();
+
+        // get preferred param
+        boolean preferred = params.containsKey("preferred") ? Boolean.parseBoolean(params.get("preferred")) : false;
+
+        // if preferred is true and there is a preferred occurrence, filter by preferred
+        if (preferred && occurrences.stream().anyMatch(occurrence -> occurrence.getPreferred() == true) )
+            stream = stream.filter(occurrence -> occurrence.getPreferred() == true);
+
+        stream.forEach(occur -> {
             try {
                 ArrayList<String> subfields = new ArrayList<String>();
-
 
                 for ( String subfield: filterSubfields ) {
                     String value = occur.getValue(subfield);
@@ -45,7 +55,7 @@ public class SubfieldsFormatFieldOccurrenceFilter implements IFieldOccurrenceFil
 
                 // if the number of subfields is not the same as the number of filterSubfields, then the occurrence is not added to the result
                 if (subfields.size() != filterSubfields.length)
-                    continue;
+                    return;
 
                 // create a new FieldOccurrence in replace of the existing one, the new one is built by selected subfields formatted as filterFormat
                 FieldOccurrence newOccur = new SimpleFieldOccurrence(occur.getFieldType());
@@ -54,7 +64,7 @@ public class SubfieldsFormatFieldOccurrenceFilter implements IFieldOccurrenceFil
             } catch (Exception e) {
                 logger.error("Error filtering occurrences " + this.getName() + " ", e);
             }
-        }
+        });
 
         return result;
     }

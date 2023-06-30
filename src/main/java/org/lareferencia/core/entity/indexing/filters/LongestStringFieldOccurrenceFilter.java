@@ -23,23 +23,25 @@ public class LongestStringFieldOccurrenceFilter implements IFieldOccurrenceFilte
 
     public Collection<FieldOccurrence> filter(Collection<FieldOccurrence> occurrences, Map<String,String> params) {
 
-       int filter_limit = params.containsKey("filter-limit") ? Integer.parseInt(params.get("filter-limit")) : 1;
+       int filter_limit = params.containsKey("filter-limit") ? Integer.parseInt(params.get("filter-limit")) : 0;
 
-       Stream<FieldOccurrence> stream = occurrences.stream();
+        // get preferred param
+        boolean preferred = params.containsKey("preferred") ? Boolean.parseBoolean(params.get("preferred")) : false;
 
-       // filter by preferred
-        boolean preferred = params.containsKey("preferred") ? Boolean.parseBoolean(params.get("prefer red")) : false;
-        stream = stream.filter(occurrence -> occurrence.getPreferred() == preferred);
+        // if preferred is true and there is a preferred occurrence, filter by preferred
+        if (preferred && occurrences.stream().anyMatch(occurrence -> occurrence.getPreferred() == true) )
+            occurrences = occurrences.stream().filter(occurrence -> occurrence.getPreferred() == true).collect(Collectors.toList());
 
-         // filter longest string
-        stream = stream.filter(occurrence -> getLength(occurrence, params) == occurrences.stream()
-                        .mapToInt(occ -> getLength(occ, params))
-                        .max().getAsInt());
+        int maxLength = occurrences.stream().mapToInt(occ -> getLength(occ, params)).max().getAsInt();
 
+         // then filter by the longest string
+        Stream<FieldOccurrence> stream = occurrences.stream().filter(occurrence -> getLength(occurrence, params) == maxLength);
 
-        // limit the number of occurrences to filter_limit
-        stream = stream.limit(filter_limit);
+        // limit the number of occurrences to filter_limit, 0 means no limit
+        if (filter_limit > 0)
+            stream = stream.limit(filter_limit);
 
+        // return the stream as a list
         return stream.collect(Collectors.toList());
     }
 

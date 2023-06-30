@@ -30,21 +30,24 @@ public class OldestDateFieldOccurrenceFilter implements IFieldOccurrenceFilter {
 
         List<FieldOccurrence> result = new ArrayList<FieldOccurrence>();
 
-        int filter_limit = params.containsKey("filter-limit") ? Integer.parseInt(params.get("filter-limit")) : 1;
+        int filter_limit = params.containsKey("filter-limit") ? Integer.parseInt(params.get("filter-limit")) : 0;
         String filter_date_format = params.containsKey("filter-date-format") ? params.get("filter-date-format") : "yyyy-MM-dd";
 
-        Stream<FieldOccurrence> stream = occurrences.stream();
+        // get preferred param
+        boolean preferred = params.containsKey("preferred") ? Boolean.parseBoolean(params.get("preferred")) : false;
 
-        // filter by preferred
-        boolean preferred = params.containsKey("preferred") ? Boolean.parseBoolean(params.get("prefer red")) : false;
-        stream = stream.filter(occurrence -> occurrence.getPreferred() == preferred);
+        // if preferred is true and there is a preferred occurrence, filter by preferred
+        if (preferred && occurrences.stream().anyMatch(occurrence -> occurrence.getPreferred() == true) )
+            occurrences = occurrences.stream().filter(occurrence -> occurrence.getPreferred() == true).collect(Collectors.toList());
 
-       stream = stream.filter(occurrence -> getLocalDateTime(occurrence, params) != null && getLocalDateTime(occurrence, params).equals(occurrences.stream()
-                        .map(occ -> getLocalDateTime(occ, params))
-                        .min(compareLocalDateTimes).get()));
 
-        // limit the number of occurrences to filter_limit
-        stream = stream.limit(filter_limit);
+        LocalDateTime minTime = occurrences.stream().map(occ -> getLocalDateTime(occ, params)).min(compareLocalDateTimes).get();
+
+        Stream<FieldOccurrence> stream = occurrences.stream().filter(occurrence -> getLocalDateTime(occurrence, params) != null && getLocalDateTime(occurrence, params).equals(minTime) );
+
+        // limit the number of occurrences to filter_limit, 0 means no limit
+        if (filter_limit > 0)
+            stream = stream.limit(filter_limit);
 
         // map to new occurrences
         stream.map(fo -> {
