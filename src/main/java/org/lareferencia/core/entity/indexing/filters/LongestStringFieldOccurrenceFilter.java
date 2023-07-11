@@ -32,6 +32,12 @@ public class LongestStringFieldOccurrenceFilter implements IFieldOccurrenceFilte
         if (preferred && occurrences.stream().anyMatch(occurrence -> occurrence.getPreferred() == true) )
             occurrences = occurrences.stream().filter(occurrence -> occurrence.getPreferred() == true).collect(Collectors.toList());
 
+        if (occurrences.size() == 0)
+            return occurrences;
+
+        if (occurrences.size() == 1)
+            return occurrences;
+
         int maxLength = occurrences.stream().mapToInt(occ -> getLength(occ, params)).max().getAsInt();
 
          // then filter by the longest string

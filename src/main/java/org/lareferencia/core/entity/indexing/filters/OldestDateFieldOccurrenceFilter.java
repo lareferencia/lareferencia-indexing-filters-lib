@@ -40,10 +40,18 @@ public class OldestDateFieldOccurrenceFilter implements IFieldOccurrenceFilter {
         if (preferred && occurrences.stream().anyMatch(occurrence -> occurrence.getPreferred() == true) )
             occurrences = occurrences.stream().filter(occurrence -> occurrence.getPreferred() == true).collect(Collectors.toList());
 
+        if (occurrences.size() == 0)
+            return result;
 
-        LocalDateTime minTime = occurrences.stream().map(occ -> getLocalDateTime(occ, params)).min(compareLocalDateTimes).get();
+        Stream<FieldOccurrence> stream = null;
 
-        Stream<FieldOccurrence> stream = occurrences.stream().filter(occurrence -> getLocalDateTime(occurrence, params) != null && getLocalDateTime(occurrence, params).equals(minTime) );
+        // if there is only one occurrence, dont filter by min date
+        if (occurrences.size() == 1) {
+            stream = occurrences.stream();
+        } else { // filter by min date
+            LocalDateTime minTime = occurrences.stream().map(occ -> getLocalDateTime(occ, params)).min(compareLocalDateTimes).get();
+            stream = occurrences.stream().filter(occurrence -> getLocalDateTime(occurrence, params) != null && getLocalDateTime(occurrence, params).equals(minTime) );
+        }
 
         // limit the number of occurrences to filter_limit, 0 means no limit
         if (filter_limit > 0)
