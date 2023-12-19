@@ -58,9 +58,8 @@ public class SubfieldsFormatFieldOccurrenceFilter implements IFieldOccurrenceFil
                     return;
 
                 // create a new FieldOccurrence in replace of the existing one, the new one is built by selected subfields formatted as filterFormat
-                FieldOccurrence newOccur = new SimpleFieldOccurrence(occur.getFieldType());
-                newOccur.addValue( String.format(filterFormat, (Object[]) subfields.toArray()) );
-                result.add(newOccur);
+       
+                result.add( new SimpleFieldOccurrence( String.format(filterFormat, (Object[]) subfields.toArray()) ) );
             } catch (Exception e) {
                 logger.error("Error filtering occurrences " + this.getName() + " ", e);
             }

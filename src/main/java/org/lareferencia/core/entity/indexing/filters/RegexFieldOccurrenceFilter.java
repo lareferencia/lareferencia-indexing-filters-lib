@@ -60,12 +60,7 @@ public class RegexFieldOccurrenceFilter implements IFieldOccurrenceFilter {
                         // if replaceRegex is empty, then return the original value
                         return occurrence;
                     } else { // if replaceRegex is not empty, then return the replaced value
-                        String replacedValue = matcher.replaceAll(replaceRegex);
-
-                        FieldOccurrence newOccur = new SimpleFieldOccurrence(occurrence.getFieldType());
-
-                        newOccur.addValue(replacedValue);
-                        return newOccur;
+                        return new SimpleFieldOccurrence( matcher.replaceAll(replaceRegex) );
                     }
                 }
 

@@ -61,13 +61,7 @@ public class OldestDateFieldOccurrenceFilter implements IFieldOccurrenceFilter {
         stream.map(fo -> {
         LocalDateTime ldt = getLocalDateTime(fo, params);
         if (ldt != null) {
-            FieldOccurrence newOccur = new SimpleFieldOccurrence(fo.getFieldType());
-            try {
-                newOccur.addValue(DateHelper.getDateTimeFormattedString(ldt, filter_date_format));
-                return newOccur;
-            } catch (EntityRelationException e) {
-                logger.error("Error filtering date occurrences " + this.getName() + " ", e);
-            }
+            return new SimpleFieldOccurrence(DateHelper.getDateTimeFormattedString(ldt, filter_date_format));    
         }
         return null;
         })
